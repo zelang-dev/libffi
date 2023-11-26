@@ -135,10 +135,11 @@ ffi_tramp_is_present (__attribute__((unused)) void *ptr)
 #  define FFI_MMAP_EXEC_WRIT 1
 #  define HAVE_MNTENT 1
 # endif
-# if defined(__CYGWIN__) || defined(_WIN32) || defined(__OS2__)
+# if defined(X86_WIN32) || defined(_WIN32) || defined(X86_WIN64) || defined(_M_ARM64) || defined(__OS2__)
 /* Windows systems may have Data Execution Protection (DEP) enabled,
    which requires the use of VirtualMalloc/VirtualFree to alloc/free
    executable memory. */
+#  undef FFI_MMAP_EXEC_WRIT
 #  define FFI_MMAP_EXEC_WRIT 1
 # endif
 #endif
@@ -179,6 +180,7 @@ struct ffi_trampoline_table
 {
   /* contiguous writable and executable pages */
   vm_address_t config_page;
+  vm_address_t trampoline_page;
 
   /* free list tracking */
   uint16_t free_count;
@@ -258,6 +260,7 @@ ffi_trampoline_table_alloc (void)
   table = calloc (1, sizeof (ffi_trampoline_table));
   table->free_count = FFI_TRAMPOLINE_COUNT;
   table->config_page = config_page;
+  table->trampoline_page = trampoline_page;
 
   /* Create and initialize the free list */
   table->free_list_pool =
@@ -424,7 +427,7 @@ ffi_closure_free (void *ptr)
 #endif
 #include <string.h>
 #include <stdio.h>
-#if !defined(_WIN32)
+#if !defined(X86_WIN32) && !defined(X86_WIN64) && !defined(_M_ARM64)
 #ifdef HAVE_MNTENT
 #include <mntent.h>
 #endif /* HAVE_MNTENT */
@@ -485,18 +488,14 @@ selinux_enabled_check (void)
 
 #endif /* !FFI_MMAP_EXEC_SELINUX */
 
-/* On PaX enable kernels that have MPROTECT enabled we can't use PROT_EXEC. */
-#if defined FFI_MMAP_PAX
+/* On PaX enable kernels that have MPROTECT enable we can't use PROT_EXEC. */
+#ifdef FFI_MMAP_EXEC_EMUTRAMP_PAX
 #include <stdlib.h>
 
-enum {
-  PAX_MPROTECT = (1 << 0),
-  PAX_EMUTRAMP = (1 << 1),
-};
-static int cached_pax_flags = -1;
+static int emutramp_enabled = -1;
 
 static int
-pax_flags_check (void)
+emutramp_enabled_check (void)
 {
   char *buf = NULL;
   size_t len = 0;
@@ -560,11 +559,11 @@ static int dlmalloc_trim(size_t) MAYBE_UNUSED;
 static size_t dlmalloc_usable_size(void*) MAYBE_UNUSED;
 static void dlmalloc_stats(void) MAYBE_UNUSED;
 
-#if !(defined(_WIN32) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX)
+#if !(defined(X86_WIN32) || !(defined(_WIN32) || defined(X86_WIN64) || defined(_M_ARM64) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX)
 /* Use these for mmap and munmap within dlmalloc.c.  */
 static void *dlmmap(void *, size_t, int, int, int, off_t);
 static int dlmunmap(void *, size_t);
-#endif /* !(defined(_WIN32) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX) */
+#endif /* !(defined(X86_WIN32) || !(defined(_WIN32) || defined(X86_WIN64) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX) */
 
 #define mmap dlmmap
 #define munmap dlmunmap
@@ -574,7 +573,7 @@ static int dlmunmap(void *, size_t);
 #undef mmap
 #undef munmap
 
-#if !(defined(_WIN32) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX)
+#if !(defined(X86_WIN32) || !(defined(_WIN32) || defined(X86_WIN64) || defined(_M_ARM64) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX)
 
 /* A mutex used to synchronize access to *exec* variables in this file.  */
 static pthread_mutex_t open_temp_exec_file_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -982,7 +981,7 @@ segment_holding_code (mstate m, char* addr)
 }
 #endif
 
-#endif /* !(defined(_WIN32) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX) */
+#endif /* !(defined(X86_WIN32) || !(defined(_WIN32) || defined(X86_WIN64) || defined(_M_ARM64) || defined(__OS2__)) || defined (__CYGWIN__) || defined(__INTERIX) */
 
 /* Allocate a chunk of memory with the given size.  Returns a pointer
    to the writable address, and sets *CODE to the executable
