@@ -1,5 +1,36 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8...3.14)
 project(libffi C)
+
+# Check headers
+include ( CheckIncludeFiles )
+check_include_files ( alloca.h HAVE_ALLOCA_H )
+check_include_files ( dlfcn.h HAVE_DLFCN_H )
+check_include_files ( inttypes.h HAVE_INTTYPES_H )
+check_include_files ( memory.h HAVE_MEMORY_H )
+check_include_files ( stdint.h HAVE_STDINT_H )
+check_include_files ( stdlib.h HAVE_STDLIB_H )
+check_include_files ( strings.h HAVE_STRINGS_H )
+check_include_files ( string.h HAVE_STRING_H )
+check_include_files ( sys/mman.h HAVE_SYS_MMAN_H )
+check_include_files ( sys/stat.h HAVE_SYS_STAT_H )
+check_include_files ( sys/types.h HAVE_SYS_TYPES_H )
+check_include_files ( unistd.h HAVE_UNISTD_H )
+set ( STDC_HEADERS 1 )
+# Check functions
+include ( CheckFunctionExists )
+check_function_exists ( memcpy HAVE_MEMCPY )
+check_function_exists ( mmap HAVE_MMAP )
+if ( HAVE_MMAP )
+  set ( HAVE_MMAP_ANON 1 )
+  set ( HAVE_MMAP_FILE 1 )
+endif ( )
+check_function_exists ( alloca HAVE_ALLOCA )
+# Check types
+include ( CheckTypeSize )
+check_type_size ( "long double" HAVE_LONG_DOUBLE )
+check_type_size ( "double" SIZEOF_DOUBLE )
+check_type_size ( "long double" SIZEOF_LONG_DOUBLE )
+check_type_size ( "void*" SIZEOF_VOID_P )
 
 set(SOURCES_LIST
     src/closures.c
