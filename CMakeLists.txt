@@ -37,6 +37,7 @@ set(SOURCES_LIST
     src/java_raw_api
     src/prep_cif.c
     src/raw_api.c
+    src/tramp.c
     src/types.c)
 
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
