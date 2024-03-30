@@ -66,7 +66,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 #define BTI_C hint #34
 #define BTI_J hint #36
-
+/*
+ * The ELF Notes section needs to indicate if BTI is supported, as the first ELF loaded that doesn't
+ * declare this support disables it for memory region containing the loaded library.
+ */
+# define GNU_PROPERTY_AARCH64_BTI (1 << 0)         /* Has Branch Target Identification */
 	.text
 	.align 4
 
@@ -523,6 +527,7 @@ L(do_closure):
 #if defined(FFI_EXEC_STATIC_TRAMP)
 	.align 4
 CNAME(ffi_closure_SYSV_V_alt):
+	BTI_C
 	/* See the comments above trampoline_code_table. */
 	ldr	x17, [sp, #8]			/* Load closure in x17 */
 	add	sp, sp, #16			/* Restore the stack */
@@ -537,6 +542,7 @@ CNAME(ffi_closure_SYSV_V_alt):
 
 	.align 4
 CNAME(ffi_closure_SYSV_alt):
+	BTI_C
 	/* See the comments above trampoline_code_table. */
 	ldr	x17, [sp, #8]			/* Load closure in x17 */
 	add	sp, sp, #16			/* Restore the stack */
@@ -673,5 +679,17 @@ CNAME(ffi_go_closure_SYSV):
 
 #if defined __ELF__ && defined __linux__
 	.section .note.GNU-stack,"",%progbits
+
+	.pushsection .note.gnu.property, "a";
+	.balign 8;
+	.long 4;
+	.long 0x10;
+	.long 0x5;
+	.asciz "GNU";
+	.long 0xc0000000; /* GNU_PROPERTY_AARCH64_FEATURE_1_AND */
+	.long 4;
+	.long GNU_PROPERTY_AARCH64_BTI;
+	.long 0;
+	.popsection;
 #endif
 

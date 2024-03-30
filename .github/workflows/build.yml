@@ -14,6 +14,30 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
+  build-warp:
+    name: ${{ matrix.HOST }} ${{ matrix.CONFIGURE_OPTIONS }} ${{ matrix.MEVAL }} ${{ matrix.LIBFFI_TEST_OPTIMIZATION }}
+    runs-on: warp-ubuntu-latest-arm64-2x
+
+    strategy:
+      fail-fast: false
+      matrix:
+       include:
+         - HOST: "aarch64-linux-gnu"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - env:
+          MEVAL: ${{ matrix.MEVAL }}
+          HOST: ${{ matrix.HOST }}
+          LDFLAGS: ${{ matrix.LDFLAGS }}
+          RUNTESTFLAGS: ${{ matrix.RUNTESTFLAGS }}
+          CONFIGURE_OPTIONS: ${{ matrix.CONFIGURE_OPTIONS }}
+        run: |
+          if test x"$MEVAL" != x; then eval ${MEVAL}; fi
+          ./.ci/install.sh
+          ./.ci/build.sh
+
   build-sim:
     name: ${{ matrix.HOST }} ${{ matrix.CONFIGURE_OPTIONS }} ${{ matrix.MEVAL }} ${{ matrix.LIBFFI_TEST_OPTIMIZATION }}
     runs-on: ubuntu-latest
@@ -89,57 +113,52 @@ jobs:
       fail-fast: false
       matrix:
        include:
-         - CFARM_HOST: gcc117.fsffrance.org
+         - CFARM_HOST: cfarm185.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: aarch64-linux-gnu
            CFARM_CC: "gcc"
            CFARM_CXX: "g++"
-         - CFARM_HOST: gcc117.fsffrance.org
-           CFARM_PORT: 22
-           CFARM_TRIPLE: aarch64-linux-gnu
-           CFARM_CC: "/home/green/gcc12/bin/gcc"
-           CFARM_CXX: "/home/green/gcc12/bin/g++"
-         - CFARM_HOST: gcc117.fsffrance.org
+         - CFARM_HOST: cfarm185.fsffrance.org
            CFARM_PORT: 22
            CFARM_TRIPLE: aarch64-lto-linux-gnu
            CFARM_CC: "gcc -flto"
            CFARM_CXX: "g++ -flto"
-         - CFARM_HOST: gcc400.fsffrance.org
+         - CFARM_HOST: cfarm400.cfarm.net
            CFARM_PORT: 25465
            CFARM_TRIPLE: loongarch64-linux-gnu
            CFARM_CC: "gcc"
            CFARM_CXX: "g++"
-         - CFARM_HOST: gcc230.fsffrance.org
+         - CFARM_HOST: cfarm230.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: mips-linux-gnu
            CFARM_CC: "gcc"
            CFARM_CXX: "g++"
-         - CFARM_HOST: gcc102.fsffrance.org
+         - CFARM_HOST: cfarm211.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: sparc64-linux-gnu
            CFARM_CC: "gcc"
            CFARM_CXX: "g++"
-         - CFARM_HOST: gcc102.fsffrance.org
+         - CFARM_HOST: cfarm211.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: sparc64-linux-gnu
            CFARM_CC: "gcc -m32"
            CFARM_CXX: "g++ -m32"
-         - CFARM_HOST: gcc91.fsffrance.org
+         - CFARM_HOST: cfarm91.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: riscv64-linux-gnu
            CFARM_CC: "gcc"
            CFARM_CXX: "g++"
-         - CFARM_HOST: gcc103.fsffrance.org
+         - CFARM_HOST: cfarm103.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: aarch64-m1-linux-gnu
            CFARM_CC: "gcc"
            CFARM_CXX: "g++"
-         - CFARM_HOST: gcc112.fsffrance.org
+         - CFARM_HOST: cfarm112.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: powerpc64le-linux-gnu
            CFARM_CC: "gcc"
            CFARM_CXX: "g++"
-         - CFARM_HOST: gcc111.fsffrance.org
+         - CFARM_HOST: cfarm111.cfarm.net
            CFARM_PORT: 22
            CFARM_TRIPLE: powerpc-ibm-aix7.1.5.0
            CFARM_CC: "gcc"
