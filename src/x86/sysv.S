@@ -458,9 +458,7 @@ L(UW24):
 L(UW25):
 	# cfi_def_cfa_offset(closure_FS + 4)
 	FFI_CLOSURE_SAVE_REGS
-	movl	closure_FS-4(%esp), %ecx	/* load retaddr */
-	movl	closure_FS(%esp), %eax		/* load closure */
-	movl	%ecx, closure_FS(%esp)		/* move retaddr */
+	movl	closure_FS-4(%esp), %eax	/* load closure */
 	jmp	L(do_closure_REGISTER)
 L(UW26):
 	# cfi_endproc
